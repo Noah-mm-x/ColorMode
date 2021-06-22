@@ -5,11 +5,6 @@ const routes = [
     name: 'Index',
     component: () => import('../view/index/index.vue')
   },
-  {
-    path: '/earn',
-    name: 'Earn',
-    component: () => import('../view/earn/earn.vue')
-  }
 ]
 const router = createRouter({
   history: createWebHistory(),

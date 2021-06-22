@@ -1,5 +1,6 @@
 <template>
-  <div class="title">
+  <div class="title">{{value}}
+    <van-button type="primary" @click="add(value)">主要按钮</van-button>
   </div>
 
 </template>
