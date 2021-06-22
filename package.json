@@ -19,7 +19,6 @@
     "less-loader": "^7.2.1",
     "lib-flexible": "^0.3.2",
     "postcss-loader": "^4.1.0",
-    "postcss-pxtorem": "^5.1.1",
     "qs": "^6.9.6",
     "style-resources-loader": "^1.4.1",
     "vite": "^1.0.0-rc.13",
