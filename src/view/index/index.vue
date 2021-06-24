@@ -72,9 +72,9 @@ export default {
       initOriginCanvas();
       normal();
     });
-    const init =()=>{
+    const init = () => {
       state.ctx.clearRect(0, 0, imgWidth, imgHeight);
-    }
+    };
     const initCanvas = () => {
       state.canvas.style.width = imgWidth + "px";
       state.canvas.style.height = imgHeight + "px";
@@ -121,14 +121,8 @@ export default {
       state.originData = state.imageOriginData.data;
       state.ctxOrigin.putImageData(state.imageData, 0, 0);
 
-
       state.ctx.drawImage(state.img, 0, 0, imgWidth, imgHeight);
-      state.imageData = state.ctx.getImageData(
-        0,
-        0,
-        imgWidth,
-        imgHeight
-      );
+      state.imageData = state.ctx.getImageData(0, 0, imgWidth, imgHeight);
       state.data = state.imageData.data;
       state.ctx.putImageData(state.imageData, 0, 0);
     };
@@ -136,10 +130,13 @@ export default {
     const darken = () => {
       let data = state.data;
       let originData = state.originData;
+      const form = (a, b) => {
+        return Math.min(a, b);
+      };
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = Math.min(data[i], originData[i]);
-        data[i + 1] = Math.min(data[i + 1], originData[i + 1]);
-        data[i + 2] = Math.min(data[i + 2], originData[i + 2]);
+        data[i] = form(data[i], originData[i]);
+        data[i + 1] = form(data[i + 1], originData[i + 1]);
+        data[i + 2] = form(data[i + 2], originData[i + 2]);
       }
       state.ctx.putImageData(state.imageData, 0, 0);
     };
@@ -147,10 +144,13 @@ export default {
     const lighten = () => {
       let data = state.data;
       let originData = state.originData;
+      const form = (a, b) => {
+        return Math.max(a, b);
+      };
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = Math.max(data[i], originData[i]);
-        data[i + 1] = Math.max(data[i + 1], originData[i + 1]);
-        data[i + 2] = Math.max(data[i + 2], originData[i + 2]);
+        data[i] = form(data[i], originData[i]);
+        data[i + 1] = form(data[i + 1], originData[i + 1]);
+        data[i + 2] = form(data[i + 2], originData[i + 2]);
       }
       state.ctx.putImageData(state.imageData, 0, 0);
     };
@@ -158,10 +158,13 @@ export default {
     const multiply = () => {
       let data = state.data;
       let originData = state.originData;
+      const form = (a, b) => {
+        return parseInt((a * b) / 255);
+      };
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = parseInt((data[i] * originData[i]) / 255);
-        data[i + 1] = parseInt((data[i + 1] * originData[i + 1]) / 255);
-        data[i + 2] = parseInt((data[i + 2] * originData[i + 2]) / 255);
+        data[i] = form(data[i], originData[i]);
+        data[i + 1] = form(data[i + 1], originData[i + 1]);
+        data[i + 2] = form(data[i + 2], originData[i + 2]);
       }
       state.ctx.putImageData(state.imageData, 0, 0);
     };
@@ -169,15 +172,13 @@ export default {
     const screen = () => {
       let data = state.data;
       let originData = state.originData;
+      const form = (a, b) => {
+        return 255 - parseInt(((255 - a) * (255 - b)) / 255);
+      };
       for (let i = 0; i < data.length; i += 4) {
-        data[i] =
-          255 - parseInt((reverse(data[i]) * reverse(originData[i])) / 255);
-        data[i + 1] =
-          255 -
-          parseInt((reverse(data[i + 1]) * reverse(originData[i + 1])) / 255);
-        data[i + 2] =
-          255 -
-          parseInt((reverse(data[i + 2]) * reverse(originData[i + 2])) / 255);
+        data[i] = form(data[i], originData[i]);
+        data[i + 1] = form(data[i + 1], originData[i + 1]);
+        data[i + 2] = form(data[i + 2], originData[i + 2]);
       }
       state.ctx.putImageData(state.imageData, 0, 0);
     };
@@ -185,7 +186,7 @@ export default {
       return 255 - val;
     };
     const handleChange = () => {
-      init()
+      init();
       switch (state.selectVal) {
         case "normal":
           normal();
