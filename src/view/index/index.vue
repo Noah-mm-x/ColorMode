@@ -17,10 +17,10 @@
         :value="item.key"
       >{{item.val}}</option>
     </select>
-    <p>上面图：</p>
+    <p>结果图：</p>
     <canvas ref="canvas"></canvas>
-    <p> 下面图：</p>
-    <canvas ref="canvasOrgin"></canvas>
+    <p>底图：</p>
+    <canvas ref="canvasOrigin"></canvas>
   </div>
 </template>
 
@@ -37,8 +37,8 @@ export default {
       selectVal: "normal",
       canvas: null,
       ctx: null,
-      canvasOrgin: null,
-      ctxOrgin: null,
+      canvasOrigin: null,
+      ctxOrigin: null,
       list: [
         {
           key: "normal",
@@ -52,6 +52,14 @@ export default {
           key: "lighten",
           val: "变亮",
         },
+        {
+          key: "multiply",
+          val: "正片叠底",
+        },
+        {
+          key: "screen",
+          val: "滤色",
+        },
       ],
       data: null,
       imageData: null,
@@ -64,6 +72,9 @@ export default {
       initOriginCanvas();
       normal();
     });
+    const init =()=>{
+      state.ctx.clearRect(0, 0, imgWidth, imgHeight);
+    }
     const initCanvas = () => {
       state.canvas.style.width = imgWidth + "px";
       state.canvas.style.height = imgHeight + "px";
@@ -78,13 +89,13 @@ export default {
       state.data = state.imageData.data;
     };
     const initOriginCanvas = () => {
-      state.canvasOrgin.style.width = imgWidth + "px";
-      state.canvasOrgin.style.height = imgHeight + "px";
-      state.canvasOrgin.width = imgWidth * dpi;
-      state.canvasOrgin.height = imgHeight * dpi;
+      state.canvasOrigin.style.width = imgWidth + "px";
+      state.canvasOrigin.style.height = imgHeight + "px";
+      state.canvasOrigin.width = imgWidth * dpi;
+      state.canvasOrigin.height = imgHeight * dpi;
 
-      state.ctxOrgin = state.canvasOrgin.getContext("2d");
-      state.ctxOrgin.scale(dpi, dpi);
+      state.ctxOrigin = state.canvasOrigin.getContext("2d");
+      state.ctxOrigin.scale(dpi, dpi);
     };
     const imgOnload = (src) => {
       const img = new Image();
@@ -100,37 +111,99 @@ export default {
       });
     };
     const normal = () => {
-      state.ctxOrgin.drawImage(state.img, 0, 0, imgWidth, imgHeight);
-      state.imageOriginData = state.ctxOrgin.getImageData(
+      state.ctxOrigin.drawImage(state.img, 0, 0, imgWidth, imgHeight);
+      state.imageOriginData = state.ctxOrigin.getImageData(
         0,
         0,
         imgWidth,
         imgHeight
       );
       state.originData = state.imageOriginData.data;
+      state.ctxOrigin.putImageData(state.imageData, 0, 0);
+
+
+      state.ctx.drawImage(state.img, 0, 0, imgWidth, imgHeight);
+      state.imageData = state.ctx.getImageData(
+        0,
+        0,
+        imgWidth,
+        imgHeight
+      );
+      state.data = state.imageData.data;
+      state.ctx.putImageData(state.imageData, 0, 0);
     };
     // 变暗，取小值
-    const darken = (val) => {
-      state.ctxOrgin.fillStyle = val || "#000000";
-      state.ctxOrgin.fillRect(0, 0, imgWidth, imgHeight);
+    const darken = () => {
       let data = state.data;
       let originData = state.originData;
-      for (let i = 0; i < data.length; i++) {
+      for (let i = 0; i < data.length; i += 4) {
         data[i] = Math.min(data[i], originData[i]);
         data[i + 1] = Math.min(data[i + 1], originData[i + 1]);
         data[i + 2] = Math.min(data[i + 2], originData[i + 2]);
       }
       state.ctx.putImageData(state.imageData, 0, 0);
     };
+    // 变暗，取大值
+    const lighten = () => {
+      let data = state.data;
+      let originData = state.originData;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.max(data[i], originData[i]);
+        data[i + 1] = Math.max(data[i + 1], originData[i + 1]);
+        data[i + 2] = Math.max(data[i + 2], originData[i + 2]);
+      }
+      state.ctx.putImageData(state.imageData, 0, 0);
+    };
+    // multiply 正片叠底 C=(A×B)/255
+    const multiply = () => {
+      let data = state.data;
+      let originData = state.originData;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = parseInt((data[i] * originData[i]) / 255);
+        data[i + 1] = parseInt((data[i + 1] * originData[i + 1]) / 255);
+        data[i + 2] = parseInt((data[i + 2] * originData[i + 2]) / 255);
+      }
+      state.ctx.putImageData(state.imageData, 0, 0);
+    };
+    // screen 滤色 C=255-(A反相×B反相)/255
+    const screen = () => {
+      let data = state.data;
+      let originData = state.originData;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] =
+          255 - parseInt((reverse(data[i]) * reverse(originData[i])) / 255);
+        data[i + 1] =
+          255 -
+          parseInt((reverse(data[i + 1]) * reverse(originData[i + 1])) / 255);
+        data[i + 2] =
+          255 -
+          parseInt((reverse(data[i + 2]) * reverse(originData[i + 2])) / 255);
+      }
+      state.ctx.putImageData(state.imageData, 0, 0);
+    };
+    const reverse = (val) => {
+      return 255 - val;
+    };
     const handleChange = () => {
+      init()
       switch (state.selectVal) {
+        case "normal":
+          normal();
+          break;
         case "darken":
           darken();
           break;
-
+        case "lighten":
+          lighten();
+          break;
+        case "multiply":
+          multiply();
+          break;
+        case "screen":
+          screen();
+          break;
         default:
           normal();
-          console.log("hhas");
           break;
       }
     };
