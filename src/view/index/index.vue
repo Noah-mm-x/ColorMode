@@ -65,6 +65,7 @@ export default {
       imageData: null,
       originData: null,
       imageOriginData: null,
+      ways: {},
     });
     onMounted(async () => {
       state.img = await imgOnload();
@@ -126,87 +127,39 @@ export default {
       state.data = state.imageData.data;
       state.ctx.putImageData(state.imageData, 0, 0);
     };
-    // 变暗，取小值
-    const darken = () => {
-      let data = state.data;
-      let originData = state.originData;
-      const form = (a, b) => {
-        return Math.min(a, b);
-      };
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = form(data[i], originData[i]);
-        data[i + 1] = form(data[i + 1], originData[i + 1]);
-        data[i + 2] = form(data[i + 2], originData[i + 2]);
-      }
-      state.ctx.putImageData(state.imageData, 0, 0);
-    };
-    // 变暗，取大值
-    const lighten = () => {
-      let data = state.data;
-      let originData = state.originData;
-      const form = (a, b) => {
-        return Math.max(a, b);
-      };
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = form(data[i], originData[i]);
-        data[i + 1] = form(data[i + 1], originData[i + 1]);
-        data[i + 2] = form(data[i + 2], originData[i + 2]);
-      }
-      state.ctx.putImageData(state.imageData, 0, 0);
-    };
-    // multiply 正片叠底 C=(A×B)/255
-    const multiply = () => {
-      let data = state.data;
-      let originData = state.originData;
-      const form = (a, b) => {
-        return parseInt((a * b) / 255);
-      };
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = form(data[i], originData[i]);
-        data[i + 1] = form(data[i + 1], originData[i + 1]);
-        data[i + 2] = form(data[i + 2], originData[i + 2]);
-      }
-      state.ctx.putImageData(state.imageData, 0, 0);
-    };
-    // screen 滤色 C=255-(A反相×B反相)/255
-    const screen = () => {
-      let data = state.data;
-      let originData = state.originData;
-      const form = (a, b) => {
-        return 255 - parseInt(((255 - a) * (255 - b)) / 255);
-      };
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = form(data[i], originData[i]);
-        data[i + 1] = form(data[i + 1], originData[i + 1]);
-        data[i + 2] = form(data[i + 2], originData[i + 2]);
-      }
-      state.ctx.putImageData(state.imageData, 0, 0);
-    };
     const reverse = (val) => {
       return 255 - val;
     };
+    state.ways = {
+      normal: normal,
+      darken: (a, b) => {
+        return Math.min(a, b);
+      },
+      lighten: (a, b) => {
+        return Math.max(a, b);
+      },
+      multiply: (a, b) => {
+        return parseInt((a * b) / 255);
+      },
+      screen: (a, b) => {
+        return 255 - parseInt((reverse(a) * reverse(b)) / 255);
+      },
+    };
+    const cal = (fnc) => {
+      let data = state.data;
+      let originData = state.originData;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = fnc(data[i], originData[i]);
+        data[i + 1] = fnc(data[i + 1], originData[i + 1]);
+        data[i + 2] = fnc(data[i + 2], originData[i + 2]);
+      }
+      state.ctx.putImageData(state.imageData, 0, 0);
+    };
+    // 变暗，取小值
     const handleChange = () => {
       init();
-      switch (state.selectVal) {
-        case "normal":
-          normal();
-          break;
-        case "darken":
-          darken();
-          break;
-        case "lighten":
-          lighten();
-          break;
-        case "multiply":
-          multiply();
-          break;
-        case "screen":
-          screen();
-          break;
-        default:
-          normal();
-          break;
-      }
+      const form = state.ways[state.selectVal];
+      cal(form)
     };
     return {
       ...toRefs(state),
