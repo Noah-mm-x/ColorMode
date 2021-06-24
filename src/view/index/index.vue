@@ -27,7 +27,8 @@
 <script>
 import { ref, onMounted, reactive, toRefs } from "vue";
 const imgWidth = 200;
-      const imgHeight = 200;
+const imgHeight = 200;
+const dpi = window.devicePixelRatio || 1;
 export default {
   components: {},
   setup() {
@@ -54,46 +55,58 @@ export default {
       data: null,
       imageData: null,
       originData: null,
-      imageOriginData: null
+      imageOriginData: null,
     });
-    onMounted(() => {
-      state.ctx = state.canvas.getContext("2d");
-      state.ctxOrgin = state.canvasOrgin.getContext("2d");
-      
-      const dpi = window.devicePixelRatio || 1;
-      console.log("dpi", dpi);
-      
-      state.canvasOrgin.style.width = imgWidth + "px";
-      state.canvasOrgin.style.height = imgHeight + "px";
-      state.canvasOrgin.width = imgWidth * dpi;
-      state.canvasOrgin.height = imgHeight * dpi;
-      state.ctxOrgin.scale(dpi, dpi);
-
+    onMounted(async () => {
+      const img = await imgOnload();
+      initCanvas(img);
+      initOriginCanvas(img);
+    });
+    const initCanvas = (img) => {
       state.canvas.style.width = imgWidth + "px";
       state.canvas.style.height = imgHeight + "px";
       state.canvas.width = imgWidth * dpi;
       state.canvas.height = imgHeight * dpi;
+
+      state.ctx = state.canvas.getContext("2d");
       state.ctx.scale(dpi, dpi);
 
+      state.ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+      state.imageData = state.ctx.getImageData(0, 0, imgWidth, imgHeight);
+      state.data = state.imageData.data;
+    };
+    const initOriginCanvas = (img) => {
+      state.canvasOrgin.style.width = imgWidth + "px";
+      state.canvasOrgin.style.height = imgHeight + "px";
+      state.canvasOrgin.width = imgWidth * dpi;
+      state.canvasOrgin.height = imgHeight * dpi;
+
+      state.ctxOrgin = state.canvasOrgin.getContext("2d");
+      state.ctxOrgin.scale(dpi, dpi);
+
+      state.ctxOrgin.drawImage(img, 0, 0, imgWidth, imgHeight);
+      state.imageOriginData = state.ctxOrgin.getImageData(0, 0, imgWidth, imgHeight);
+      state.originData = state.imageOriginData.data;
+    };
+    const imgOnload = (src) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.src = "/@img/2.jpeg";
-      img.onload = () => {
-        state.ctxOrgin.drawImage(img, 0, 0, imgWidth, imgHeight);
-        state.imageOriginData = state.ctxOrgin.getImageData(0, 0, imgWidth, imgHeight);
-        state.originData = state.imageOriginData.data;
-
-        state.ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
-        state.imageData = state.ctx.getImageData(0, 0, imgWidth, imgHeight);
-        state.data = state.imageData.data;
-      };
-    });
+      img.src = src || "/@img/2.jpeg";
+      return new Promise((res, rej) => {
+        img.onload = () => {
+          res(img);
+        };
+        img.onerror = () => {
+          rej(img);
+        };
+      });
+    };
     // 变暗，取小值
     const darken = (val) => {
       state.ctxOrgin.fillStyle = val || "#000000";
       state.ctxOrgin.fillRect(0, 0, imgWidth, imgHeight);
-      let data = state.data
-      let originData = state.originData
+      let data = state.data;
+      let originData = state.originData;
       for (let i = 0; i < data.length; i++) {
         data[i] = Math.min(data[i], originData[i]);
         data[i + 1] = Math.min(data[i + 1], originData[i + 1]);
@@ -101,24 +114,19 @@ export default {
       }
       state.ctx.putImageData(state.imageData, 0, 0);
     };
-    // const canvas = document.getElementById("canvas");
-    // const ctx = canvas.getContext("2d");
-    // const img = new Image();
-    // img.crossOrigin = "anonymous";
-    // img.src = "/@img/1.jpeg";
     const handleChange = () => {
       switch (state.selectVal) {
-        case 'darken':
-          darken()
+        case "darken":
+          darken();
           break;
-      
+
         default:
-          console.log('hhas')
+          console.log("hhas");
           break;
       }
     };
     return {
-      ...toRefs(state), 
+      ...toRefs(state),
       handleChange,
     };
   },
