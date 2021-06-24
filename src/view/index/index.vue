@@ -33,6 +33,7 @@ export default {
   components: {},
   setup() {
     const state = reactive({
+      img: null,
       selectVal: "normal",
       canvas: null,
       ctx: null,
@@ -58,11 +59,12 @@ export default {
       imageOriginData: null,
     });
     onMounted(async () => {
-      const img = await imgOnload();
-      initCanvas(img);
-      initOriginCanvas(img);
+      state.img = await imgOnload();
+      initCanvas();
+      initOriginCanvas();
+      normal();
     });
-    const initCanvas = (img) => {
+    const initCanvas = () => {
       state.canvas.style.width = imgWidth + "px";
       state.canvas.style.height = imgHeight + "px";
       state.canvas.width = imgWidth * dpi;
@@ -71,11 +73,11 @@ export default {
       state.ctx = state.canvas.getContext("2d");
       state.ctx.scale(dpi, dpi);
 
-      state.ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+      state.ctx.drawImage(state.img, 0, 0, imgWidth, imgHeight);
       state.imageData = state.ctx.getImageData(0, 0, imgWidth, imgHeight);
       state.data = state.imageData.data;
     };
-    const initOriginCanvas = (img) => {
+    const initOriginCanvas = () => {
       state.canvasOrgin.style.width = imgWidth + "px";
       state.canvasOrgin.style.height = imgHeight + "px";
       state.canvasOrgin.width = imgWidth * dpi;
@@ -83,10 +85,6 @@ export default {
 
       state.ctxOrgin = state.canvasOrgin.getContext("2d");
       state.ctxOrgin.scale(dpi, dpi);
-
-      state.ctxOrgin.drawImage(img, 0, 0, imgWidth, imgHeight);
-      state.imageOriginData = state.ctxOrgin.getImageData(0, 0, imgWidth, imgHeight);
-      state.originData = state.imageOriginData.data;
     };
     const imgOnload = (src) => {
       const img = new Image();
@@ -100,6 +98,16 @@ export default {
           rej(img);
         };
       });
+    };
+    const normal = () => {
+      state.ctxOrgin.drawImage(state.img, 0, 0, imgWidth, imgHeight);
+      state.imageOriginData = state.ctxOrgin.getImageData(
+        0,
+        0,
+        imgWidth,
+        imgHeight
+      );
+      state.originData = state.imageOriginData.data;
     };
     // 变暗，取小值
     const darken = (val) => {
@@ -121,6 +129,7 @@ export default {
           break;
 
         default:
+          normal();
           console.log("hhas");
           break;
       }
