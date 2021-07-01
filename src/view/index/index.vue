@@ -86,6 +86,7 @@ export default {
       originData: null,
       imageOriginData: null,
       ways: {},
+      cache: new Map()
     });
     onMounted(async () => {
       state.img = await imgOnload();
@@ -218,9 +219,8 @@ export default {
       }
       state.ctx.putImageData(state.imageData, 0, 0);
     };
-    // 变暗，取小值
     const handleChange = () => {
-      init();
+      init(); 
       const form = state.ways[state.selectVal];
       cal(form);
     };
